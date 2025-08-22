@@ -1,30 +1,28 @@
 <?php
 require_once 'db.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $title = $_POST['title'];
-    $description = $_POST['description'];
-    $image = $_FILES['image'];
-
-    $uploadDir = 'uploads/';
-    $uploadFile = $uploadDir . basename($image['name']);
-
-    if (move_uploaded_file($image['tmp_name'], $uploadFile)) {
-        $db = getDatabaseConnection();
-        $stmt = $db->prepare("INSERT INTO records (title, description, image) VALUES (:title, :description, :image)");
-        $stmt->bindParam(':title', $title);
-        $stmt->bindParam(':description', $description);
-        $stmt->bindParam(':image', $uploadFile);
-
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    
+    // Validate input
+    if (!empty($name) && !empty($email)) {
+        $sql = "INSERT INTO users (name, email) VALUES (?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ss", $name, $email);
+        
         if ($stmt->execute()) {
-            echo "Record created successfully.";
+            echo "New record created successfully";
         } else {
-            echo "Error creating record.";
+            echo "Error: " . $stmt->error;
         }
+        
+        $stmt->close();
     } else {
-        echo "Error uploading image.";
+        echo "Name and email are required.";
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -35,18 +33,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Create Record</title>
 </head>
 <body>
-    <h1>Create Record</h1>
-    <form action="create.php" method="post" enctype="multipart/form-data">
-        <label for="title">Title:</label>
-        <input type="text" name="title" required>
+    <h1>Create New Record</h1>
+    <form action="create.php" method="post">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
         <br>
-        <label for="description">Description:</label>
-        <textarea name="description" required></textarea>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
         <br>
-        <label for="image">Image:</label>
-        <input type="file" name="image" accept="image/*" required>
-        <br>
-        <input type="submit" value="Create">
+        <input type="submit" value="Submit">
     </form>
 </body>
 </html>
